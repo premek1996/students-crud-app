@@ -1,4 +1,4 @@
-package com.app.demo.utils;
+package com.app.demo.exception;
 
 public interface ExceptionMessage {
 

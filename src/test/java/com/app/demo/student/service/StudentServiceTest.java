@@ -1,10 +1,10 @@
 package com.app.demo.student.service;
 
-import com.app.demo.student.controller.dto.AddStudentDTO;
-import com.app.demo.student.controller.dto.UpdateStudentDTO;
+import com.app.demo.exception.BadRequestException;
+import com.app.demo.student.dto.AddStudentDTO;
+import com.app.demo.student.dto.UpdateStudentDTO;
 import com.app.demo.student.model.Student;
 import com.app.demo.student.repository.StudentRepository;
-import com.app.demo.student.service.exception.StudentServiceException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,13 +13,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 
-import static com.app.demo.utils.ExceptionMessage.EMAIL_ALREADY_EXISTS;
-import static com.app.demo.utils.ExceptionMessage.STUDENT_DOES_NOT_EXIST_WITH_GIVEN_ID;
+import static com.app.demo.exception.ExceptionMessage.EMAIL_ALREADY_EXISTS;
+import static com.app.demo.exception.ExceptionMessage.STUDENT_DOES_NOT_EXIST_WITH_GIVEN_ID;
 import static java.time.Month.JANUARY;
-import static java.time.Month.MAY;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -32,34 +30,10 @@ class StudentServiceTest {
     @InjectMocks
     private StudentService studentService;
 
-    @Test
-    @DisplayName("it should get all students")
-    void test1() {
-        var student1 = Student.builder()
-                .name("student1")
-                .email("email1")
-                .birthdate(LocalDate.of(2000, JANUARY, 5))
-                .build();
-        var student2 = Student.builder()
-                .name("student2")
-                .email("email2")
-                .birthdate(LocalDate.of(2004, MAY, 15))
-                .build();
-        when(studentRepository.findAll())
-                .thenReturn(List.of(student1, student2));
-
-        assertThat(studentService.getStudents())
-                .containsExactly(student1, student2);
-
-        verify(studentRepository, times(1))
-                .findAll();
-
-        verifyNoMoreInteractions(studentRepository);
-    }
 
     @Test
     @DisplayName("it should throw exception when email already exists")
-    void test2() {
+    void test1() {
         var email = "email1";
 
         var addStudentDTO = AddStudentDTO.builder()
@@ -72,7 +46,7 @@ class StudentServiceTest {
                 .thenReturn(Optional.of(mock(Student.class)));
 
         assertThatThrownBy(() -> studentService.addStudent(addStudentDTO))
-                .isInstanceOf(StudentServiceException.class)
+                .isInstanceOf(BadRequestException.class)
                 .hasMessage(EMAIL_ALREADY_EXISTS);
 
         verify(studentRepository, times(1))
@@ -83,7 +57,7 @@ class StudentServiceTest {
 
     @Test
     @DisplayName("it should add student")
-    void test3() {
+    void test2() {
         var email = "email1";
 
         var addStudentDTO = AddStudentDTO.builder()
@@ -92,8 +66,18 @@ class StudentServiceTest {
                 .birthdate(LocalDate.of(2000, JANUARY, 5))
                 .build();
 
+        var student = Student.builder()
+                .id(1L)
+                .name("student1")
+                .email(email)
+                .birthdate(LocalDate.of(2000, JANUARY, 5))
+                .build();
+
         when(studentRepository.findStudentByEmail(email))
                 .thenReturn(Optional.empty());
+
+        when(studentRepository.save(addStudentDTO.toStudent()))
+                .thenReturn(student);
 
         assertThatNoException()
                 .isThrownBy(() -> studentService.addStudent(addStudentDTO));
@@ -109,7 +93,7 @@ class StudentServiceTest {
 
     @Test
     @DisplayName("it should throw exception when student does not exist with given id")
-    void test4() {
+    void test3() {
         var updateStudentDTO = UpdateStudentDTO.builder()
                 .id(1L)
                 .name("name")
@@ -120,7 +104,7 @@ class StudentServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> studentService.updateStudent(updateStudentDTO))
-                .isInstanceOf(StudentServiceException.class)
+                .isInstanceOf(BadRequestException.class)
                 .hasMessage(STUDENT_DOES_NOT_EXIST_WITH_GIVEN_ID);
 
         verify(studentRepository, times(1))
@@ -131,7 +115,7 @@ class StudentServiceTest {
 
     @Test
     @DisplayName("it should throw exception when email already exists")
-    void test5() {
+    void test4() {
         var updateStudentDTO = UpdateStudentDTO.builder()
                 .id(1L)
                 .name("name")
@@ -152,7 +136,7 @@ class StudentServiceTest {
                 .thenReturn(Optional.of(mock(Student.class)));
 
         assertThatThrownBy(() -> studentService.updateStudent(updateStudentDTO))
-                .isInstanceOf(StudentServiceException.class)
+                .isInstanceOf(BadRequestException.class)
                 .hasMessage(EMAIL_ALREADY_EXISTS);
 
         verify(studentRepository, times(1))
@@ -166,7 +150,7 @@ class StudentServiceTest {
 
     @Test
     @DisplayName("it should update student")
-    void test6() {
+    void test5() {
         var id = 1L;
         var updateStudentDTO = UpdateStudentDTO.builder()
                 .id(id)

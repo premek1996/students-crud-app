@@ -12,6 +12,7 @@ import java.time.Period;
 @Setter
 @Builder
 @Entity
+@EqualsAndHashCode
 public class Student {
 
     @Id
@@ -25,10 +26,13 @@ public class Student {
     )
     private Long id;
 
+    @Column(nullable = false)
     private String name;
 
+    @Column(nullable = false)
     private String email;
 
+    @Column(nullable = false)
     private LocalDate birthdate;
 
     @Transient
